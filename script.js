@@ -42,6 +42,7 @@ let gameOver = false;
 let attackCooldown = 0;
 let invincibleTimer = 0;
 let startTime = Date.now();
+let gameEndTime = null;
 
 let skillCheckActive = false;
 let skillCheckTargetObstacle = null;
@@ -54,6 +55,18 @@ let skillCheckTolerance = 0;
 let particles = [];
 let particlesCreated = false;
 let totalObstacles = 0;
+
+let collectibles = [];
+
+let checkpoint = {
+  x: 60,
+  y: 420,
+  w: 30,
+  h: 35,
+  reached: false,
+  respawnX: 60,
+  respawnY: 420
+};
 
 const DIFFICULTIES = {
   easy: {
@@ -173,6 +186,14 @@ function randomBetween(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function getElapsedTime() {
+  if (gameEndTime !== null) {
+    return Math.floor((gameEndTime - startTime) / 1000);
+  }
+
+  return Math.floor((Date.now() - startTime) / 1000);
+}
+
 function loadLevel() {
   const difficulty = getDifficultySettings();
 
@@ -190,6 +211,7 @@ function loadLevel() {
   attackCooldown = 0;
   invincibleTimer = 0;
   startTime = Date.now();
+  gameEndTime = null;
   skillCheckActive = false;
   skillCheckTargetObstacle = null;
   skillCheckTargetTime = 0;
@@ -226,6 +248,40 @@ function loadLevel() {
       }
     }
   });
+
+  checkpoint = {
+  x: platforms[2].x + platforms[2].w / 2 - 15,
+  y: platforms[2].y - 35,
+  w: 30,
+  h: 35,
+  reached: false,
+  respawnX: 60,
+  respawnY: 420
+};
+
+collectibles = [
+  {
+    x: platforms[1].x + platforms[1].w / 2 - 10,
+    y: platforms[1].y - 35,
+    w: 20,
+    h: 20,
+    collected: false
+  },
+  {
+    x: platforms[2].x + platforms[2].w / 2 - 10,
+    y: platforms[2].y - 65,
+    w: 20,
+    h: 20,
+    collected: false
+  },
+  {
+    x: platforms[3].x + platforms[3].w / 2 - 10,
+    y: platforms[3].y - 35,
+    w: 20,
+    h: 20,
+    collected: false
+  }
+];
 
   const groundPlatform = platforms[0];
   const pipeX = randomBetween(groundPlatform.x + 10, groundPlatform.x + groundPlatform.w - 65);
@@ -418,6 +474,8 @@ function update() {
   movePlayer();
   moveGerms();
   checkGermDamage();
+  checkCollectibles();
+  checkCheckpoint();
   checkPipeGoal();
 }
 
@@ -650,17 +708,50 @@ function checkGermDamage() {
   });
 }
 
+function checkCollectibles() {
+  collectibles.forEach(function(drop) {
+    if (!drop.collected && isColliding(player, drop)) {
+      drop.collected = true;
+      score += 25;
+
+      const collectedCount = collectibles.filter(function(item) {
+        return item.collected;
+      }).length;
+
+      if (collectedCount === collectibles.length && lives < 5) {
+        lives++;
+      }
+    }
+  });
+}
+
+function checkCheckpoint() {
+  if (!checkpoint.reached && isColliding(player, checkpoint)) {
+    checkpoint.reached = true;
+    checkpoint.respawnX = checkpoint.x;
+    checkpoint.respawnY = checkpoint.y - player.h;
+    score += 25;
+  }
+}
+
 function damagePlayer() {
   lives--;
   invincibleTimer = 90;
 
-  player.x = 60;
-  player.y = 420;
+  if (checkpoint.reached) {
+    player.x = checkpoint.respawnX;
+    player.y = checkpoint.respawnY;
+  } else {
+    player.x = 60;
+    player.y = 420;
+  }
+
   player.vx = 0;
   player.vy = 0;
 
   if (lives <= 0) {
-    gameOver = true;
+  gameEndTime = Date.now();
+  gameOver = true;
   }
 }
 
@@ -672,6 +763,8 @@ function checkPipeGoal() {
   if (isColliding(player, pipe) && obstacles.length === 0) {
     const difficulty = getDifficultySettings();
     score += Math.floor(200 * difficulty.scoreMultiplier);
+
+    gameEndTime = Date.now();
     gameWon = true;
   }
 }
@@ -685,6 +778,8 @@ function draw() {
   drawPlatforms();
   drawObstacles();
   drawPipe();
+  drawCollectibles();
+  drawCheckpoint();
   drawGerms();
   drawPlayer();
   drawUI();
@@ -695,7 +790,7 @@ function draw() {
   }
 
   if (gameWon) {
-    drawCenterMessage("Clean Water Restored!", "Press R to restart");
+    drawWinScreen();
     drawParticles();
   }
 
@@ -833,6 +928,40 @@ function drawPipe() {
   ctx.strokeRect(pipe.x, pipe.y, pipe.w, pipe.h);
 }
 
+function drawCollectibles() {
+  collectibles.forEach(function(drop) {
+    if (!drop.collected) {
+      ctx.fillStyle = COLORS.cleanWater;
+      ctx.beginPath();
+      ctx.arc(drop.x + drop.w / 2, drop.y + drop.h / 2, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = COLORS.white;
+      ctx.beginPath();
+      ctx.arc(drop.x + drop.w / 2 - 3, drop.y + drop.h / 2 - 3, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = COLORS.yellow;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(drop.x, drop.y, drop.w, drop.h);
+    }
+  });
+}
+
+function drawCheckpoint() {
+  ctx.fillStyle = checkpoint.reached ? COLORS.cleanWater : COLORS.yellow;
+  ctx.fillRect(checkpoint.x, checkpoint.y, checkpoint.w, checkpoint.h);
+
+  ctx.fillStyle = COLORS.deepTeal;
+  ctx.fillRect(checkpoint.x + 5, checkpoint.y + 5, checkpoint.w - 10, checkpoint.h - 10);
+
+  ctx.fillStyle = COLORS.white;
+  ctx.font = "11px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("SAVE", checkpoint.x + checkpoint.w / 2, checkpoint.y - 6);
+  ctx.textAlign = "left";
+}
+
 function drawGerms() {
   germs.forEach(function(germ) {
     ctx.fillStyle = COLORS.deepTeal;
@@ -937,7 +1066,7 @@ function roundRect(x, y, w, h, r, fill, stroke) {
 // ==================================================
 
 function drawUI() {
-  const time = Math.floor((Date.now() - startTime) / 1000);
+  const time = getElapsedTime();
 
   let waterProgress = 0;
 
@@ -1080,6 +1209,44 @@ function drawSkillCheck() {
   if (elapsed > skillCheckDuration) {
     completeSkillCheck(false);
   }
+}
+
+function drawWinScreen() {
+  const finalTime = getElapsedTime();
+  const difficulty = getDifficultySettings();
+
+  const boxWidth = 560;
+  const boxHeight = 260;
+  const boxX = (WIDTH - boxWidth) / 2;
+  const boxY = (HEIGHT - boxHeight) / 2;
+
+  ctx.fillStyle = "rgba(28, 43, 64, 0.88)";
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.fillStyle = COLORS.white;
+  ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+
+  ctx.strokeStyle = COLORS.yellow;
+  ctx.lineWidth = 5;
+  ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+
+  drawJerryCan(boxX + 45, boxY + 55, 48, 70);
+
+  ctx.fillStyle = COLORS.black;
+  ctx.textAlign = "center";
+
+  ctx.font = "30px Arial";
+  ctx.fillText("Clean Water Restored!", boxX + boxWidth / 2 + 80, boxY + 65);
+
+  ctx.font = "20px Arial";
+  ctx.fillText(`Final Score: ${score}`, boxX + boxWidth / 2 + 80, boxY + 110);
+  ctx.fillText(`Time: ${finalTime} seconds`, boxX + boxWidth / 2 + 80, boxY + 145);
+  ctx.fillText(`Difficulty: ${difficulty.name}`, boxX + boxWidth / 2 + 80, boxY + 180);
+
+  ctx.font = "18px Arial";
+  ctx.fillText("Press R to play again", boxX + boxWidth / 2 + 80, boxY + 220);
+
+  ctx.textAlign = "left";
 }
 
 function drawCenterMessage(title, subtitle) {
