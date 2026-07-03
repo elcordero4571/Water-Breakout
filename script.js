@@ -53,6 +53,96 @@ let skillCheckTolerance = 0;
 
 let particles = [];
 let particlesCreated = false;
+let totalObstacles = 0;
+
+const DIFFICULTIES = {
+  easy: {
+    name: "Easy",
+    lives: 5,
+    germSpeedMultiplier: 0.7,
+    obstacleHpMin: 1,
+    obstacleHpMax: 3,
+    skillDurationMin: 2200,
+    skillDurationMax: 3000,
+    skillToleranceMin: 300,
+    skillToleranceMax: 450,
+    scoreMultiplier: 1
+  },
+
+  normal: {
+    name: "Normal",
+    lives: 3,
+    germSpeedMultiplier: 1,
+    obstacleHpMin: 2,
+    obstacleHpMax: 4,
+    skillDurationMin: 1500,
+    skillDurationMax: 2500,
+    skillToleranceMin: 150,
+    skillToleranceMax: 350,
+    scoreMultiplier: 1
+  },
+
+  hard: {
+    name: "Hard",
+    lives: 2,
+    germSpeedMultiplier: 1.35,
+    obstacleHpMin: 3,
+    obstacleHpMax: 5,
+    skillDurationMin: 1200,
+    skillDurationMax: 2000,
+    skillToleranceMin: 90,
+    skillToleranceMax: 220,
+    scoreMultiplier: 1.25
+  }
+};
+
+let currentDifficulty = "normal";
+let gameLoopStarted = false;
+let difficultyMenuOpen = true;
+
+function getDifficultySettings() {
+  return DIFFICULTIES[currentDifficulty];
+}
+
+function showDifficultyMenu() {
+  const menu = document.getElementById("difficultyMenu");
+
+  if (menu) {
+    menu.style.display = "flex";
+  }
+
+  difficultyMenuOpen = true;
+}
+
+function startGameWithDifficulty(difficultyName) {
+  currentDifficulty = difficultyName;
+
+  const menu = document.getElementById("difficultyMenu");
+
+  if (menu) {
+    menu.style.display = "none";
+  }
+
+  difficultyMenuOpen = false;
+
+  loadLevel();
+
+  if (!gameLoopStarted) {
+    gameLoopStarted = true;
+    gameLoop();
+  }
+}
+
+function setupDifficultyButtons() {
+  const buttons = document.querySelectorAll(".difficulty-btn");
+
+  buttons.forEach(function(button) {
+    button.addEventListener("click", function() {
+      const selectedDifficulty = button.dataset.difficulty;
+      startGameWithDifficulty(selectedDifficulty);
+    });
+  });
+}
 
 // ==================================================
 // 4. PLAYER
@@ -84,6 +174,8 @@ function randomBetween(min, max) {
 }
 
 function loadLevel() {
+  const difficulty = getDifficultySettings();
+
   player.x = 60;
   player.y = 420;
   player.vx = 0;
@@ -92,7 +184,7 @@ function loadLevel() {
   player.facing = 1;
 
   score = 0;
-  lives = 3;
+  lives = difficulty.lives;
   gameWon = false;
   gameOver = false;
   attackCooldown = 0;
@@ -180,53 +272,58 @@ function loadLevel() {
       y: platforms[1].y - 60,
       w: 60,
       h: 60,
-      hp: randomBetween(2, 4)
+      hp: randomBetween(difficulty.obstacleHpMin, difficulty.obstacleHpMax)
     },
     {
       x: randomObstacleX(platforms[2], null),
       y: platforms[2].y - 60,
       w: 60,
       h: 60,
-      hp: randomBetween(2, 4)
+      hp: randomBetween(difficulty.obstacleHpMin, difficulty.obstacleHpMax)
     },
     {
       x: randomObstacleX(platforms[3], null),
       y: platforms[3].y - 60,
       w: 60,
       h: 60,
-      hp: randomBetween(2, 4)
+      hp: randomBetween(difficulty.obstacleHpMin, difficulty.obstacleHpMax)
     }
   ];
+  totalObstacles = obstacles.length;
 
   germs = [
-    {
-      x: randomBetween(90, 250),
-      y: 460,
-      w: 40,
-      h: 40,
-      vx: randomBetween(16, 24) / 10,
-      minX: 90,
-      maxX: 250
-    },
-    {
-      x: randomBetween(platforms[2].x, platforms[2].x + platforms[2].w - 40),
-      y: platforms[2].y - 40,
-      w: 40,
-      h: 40,
-      vx: randomBetween(15, 22) / 10,
-      minX: platforms[2].x,
-      maxX: platforms[2].x + platforms[2].w - 40
-    },
-    {
-      x: randomBetween(platforms[3].x, platforms[3].x + platforms[3].w - 40),
-      y: platforms[3].y - 40,
-      w: 40,
-      h: 40,
-      vx: randomBetween(14, 20) / 10,
-      minX: platforms[3].x,
-      maxX: platforms[3].x + platforms[3].w - 40
-    }
-  ];
+  {
+    x: randomBetween(90, 250),
+    y: 460,
+    w: 40,
+    h: 40,
+    vx: randomBetween(16, 24) / 10,
+    minX: 90,
+    maxX: 250
+  },
+  {
+    x: randomBetween(platforms[2].x, platforms[2].x + platforms[2].w - 40),
+    y: platforms[2].y - 40,
+    w: 40,
+    h: 40,
+    vx: randomBetween(15, 22) / 10,
+    minX: platforms[2].x,
+    maxX: platforms[2].x + platforms[2].w - 40
+  },
+  {
+    x: randomBetween(platforms[3].x, platforms[3].x + platforms[3].w - 40),
+    y: platforms[3].y - 40,
+    w: 40,
+    h: 40,
+    vx: randomBetween(14, 20) / 10,
+    minX: platforms[3].x,
+    maxX: platforms[3].x + platforms[3].w - 40
+  }
+];
+
+germs.forEach(function(germ) {
+  germ.vx *= difficulty.germSpeedMultiplier;
+});
 
   pipe = {
     x: pipeX,
@@ -244,7 +341,8 @@ function loadLevel() {
   ];
 }
 
-loadLevel();
+setupDifficultyButtons();
+showDifficultyMenu();
 
 // ==================================================
 // 6. KEYBOARD CONTROLS
@@ -270,8 +368,8 @@ document.addEventListener("keydown", function(event) {
   }
 
   if (key === "r") {
-    loadLevel();
-  }
+  showDifficultyMenu();
+}
 });
 
 document.addEventListener("keyup", function(event) {
@@ -288,13 +386,17 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-gameLoop();
+
 
 // ==================================================
 // 8. UPDATE GAME LOGIC
 // ==================================================
 
 function update() {
+  if (difficultyMenuOpen) {
+    return;
+  }
+
   animateBackgroundWater();
   updateParticles();
 
@@ -481,9 +583,19 @@ function attackObstacle() {
       skillCheckStartTime = Date.now();
       
       // Randomize difficulty
-      skillCheckDuration = randomBetween(1500, 2500);  // 1.5s to 2.5s
-      skillCheckTolerance = randomBetween(150, 350);   // 150ms to 350ms window
-      skillCheckTargetTime = randomBetween(400, skillCheckDuration - 400);
+      const difficulty = getDifficultySettings();
+
+      skillCheckDuration = randomBetween(
+        difficulty.skillDurationMin,
+        difficulty.skillDurationMax
+    );
+
+    skillCheckTolerance = randomBetween(
+      difficulty.skillToleranceMin,
+      difficulty.skillToleranceMax
+    );
+
+    skillCheckTargetTime = randomBetween(400, skillCheckDuration - 400);
       skillCheckSuccess = false;
       attackCooldown = 20;
       return;
@@ -501,7 +613,8 @@ function completeSkillCheck(success) {
 
     if (skillCheckTargetObstacle.hp <= 0) {
       skillCheckTargetObstacle.broken = true;
-      score += 50;
+      const difficulty = getDifficultySettings();
+      score += Math.floor(50 * difficulty.scoreMultiplier);
     }
   } else if (!success) {
     // Failed skill check: lose points
@@ -557,7 +670,8 @@ function damagePlayer() {
 
 function checkPipeGoal() {
   if (isColliding(player, pipe) && obstacles.length === 0) {
-    score += 200;
+    const difficulty = getDifficultySettings();
+    score += Math.floor(200 * difficulty.scoreMultiplier);
     gameWon = true;
   }
 }
@@ -574,6 +688,7 @@ function draw() {
   drawGerms();
   drawPlayer();
   drawUI();
+  drawTutorialText();
 
   if (skillCheckActive) {
     drawSkillCheck();
@@ -674,16 +789,48 @@ function drawPipe() {
   ctx.fillStyle = COLORS.deepTeal;
   ctx.fillRect(pipe.x + 8, pipe.y + 8, pipe.w - 16, pipe.h - 16);
 
-  ctx.fillStyle = COLORS.cleanWater;
-  ctx.fillRect(pipe.x + 16, pipe.y + 16, pipe.w - 32, pipe.h - 32);
+  if (obstacles.length > 0) {
+    // Pipe is still blocked
+    ctx.fillStyle = COLORS.burntOrange;
+    ctx.fillRect(pipe.x + 16, pipe.y + 16, pipe.w - 32, pipe.h - 32);
+
+    // Small debris marks
+    ctx.strokeStyle = COLORS.navy;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(pipe.x + 16, pipe.y + 28);
+    ctx.lineTo(pipe.x + 38, pipe.y + 48);
+    ctx.moveTo(pipe.x + 38, pipe.y + 24);
+    ctx.lineTo(pipe.x + 20, pipe.y + 58);
+    ctx.stroke();
+
+    ctx.fillStyle = COLORS.white;
+    ctx.font = "13px Arial";
+    ctx.fillText("BLOCKED", pipe.x - 7, pipe.y - 10);
+  } else {
+    // Pipe has been restored
+    ctx.fillStyle = COLORS.cleanWater;
+    ctx.fillRect(pipe.x + 16, pipe.y + 16, pipe.w - 32, pipe.h - 32);
+
+    // Clean water glow
+    ctx.strokeStyle = COLORS.yellow;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(pipe.x + pipe.w / 2, pipe.y + pipe.h / 2, 34, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Water stream coming from pipe
+    ctx.fillStyle = COLORS.cleanWater;
+    ctx.fillRect(pipe.x + pipe.w / 2 - 6, pipe.y + pipe.h, 12, 500 - (pipe.y + pipe.h));
+
+    ctx.fillStyle = COLORS.white;
+    ctx.font = "13px Arial";
+    ctx.fillText("CLEAN!", pipe.x + 3, pipe.y - 10);
+  }
 
   ctx.strokeStyle = COLORS.yellow;
   ctx.lineWidth = 4;
   ctx.strokeRect(pipe.x, pipe.y, pipe.w, pipe.h);
-
-  ctx.fillStyle = COLORS.white;
-  ctx.font = "15px Arial";
-  ctx.fillText("PIPE", pipe.x + 8, pipe.y - 10);
 }
 
 function drawGerms() {
@@ -792,33 +939,85 @@ function roundRect(x, y, w, h, r, fill, stroke) {
 function drawUI() {
   const time = Math.floor((Date.now() - startTime) / 1000);
 
+  let waterProgress = 0;
+
+  if (totalObstacles > 0) {
+    waterProgress = Math.floor(((totalObstacles - obstacles.length) / totalObstacles) * 100);
+  }
+
   drawJerryCan(26, 20, 20, 28);
 
   ctx.fillStyle = COLORS.black;
   ctx.font = "22px Arial";
   ctx.textAlign = "left";
-  const titleText = "charity: water";
-  const titleX = 58;
-  const titleY = 41;
-  ctx.fillText(titleText, titleX, titleY);
+  ctx.fillText("charity: water", 58, 41);
 
   ctx.font = "18px Arial";
-  const livesText = `Lives: ${lives}`;
-  const timeText = `Time: ${time}`;
-  const scoreText = `Score: ${score}`;
-
-  const leftMargin = titleX;
-  const rightMargin = 20;
-  const availableWidth = WIDTH - leftMargin - rightMargin;
-  const segmentWidth = availableWidth / 3;
-
-  ctx.textAlign = "left";
-  ctx.fillText(livesText, leftMargin + segmentWidth, titleY);
-  ctx.fillText(timeText, leftMargin + segmentWidth * 2, titleY);
+  ctx.fillText(`Lives: ${lives}`, 250, 41);
+  ctx.fillText(`Time: ${time}`, 360, 41);
 
   ctx.textAlign = "right";
-  ctx.fillText(scoreText, WIDTH - rightMargin, titleY);
+  ctx.fillText(`Score: ${score}`, WIDTH - 20, 41);
   ctx.textAlign = "left";
+
+  ctx.font = "16px Arial";
+  ctx.fillStyle = COLORS.black;
+  ctx.fillText(`Water Restored: ${waterProgress}%`, 58, 70);
+
+  const barX = 220;
+  const barY = 57;
+  const barWidth = 220;
+  const barHeight = 18;
+
+  ctx.fillStyle = COLORS.white;
+  ctx.fillRect(barX, barY, barWidth, barHeight);
+
+  ctx.strokeStyle = COLORS.deepTeal;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+  ctx.fillStyle = COLORS.cleanWater;
+  ctx.fillRect(barX, barY, barWidth * (waterProgress / 100), barHeight);
+
+  ctx.fillStyle = COLORS.yellow;
+  ctx.fillRect(barX, barY, barWidth * (waterProgress / 100), 4);
+
+  const difficulty = getDifficultySettings();
+
+  ctx.fillStyle = COLORS.black;
+  ctx.font = "14px Arial";
+  ctx.textAlign = "left";
+  ctx.fillText(`Difficulty: ${difficulty.name}`, 58, 92);
+  ctx.fillText("Press R to reopen difficulty menu", 58, 112);
+}
+
+function drawTutorialText() {
+  const timeSinceStart = Date.now() - startTime;
+
+  if (timeSinceStart > 10000 || score > 0 || gameWon || gameOver) {
+    return;
+  }
+
+  const boxX = 55;
+  const boxY = 90;
+  const boxWidth = 330;
+  const boxHeight = 105;
+
+  ctx.fillStyle = "rgba(245, 242, 224, 0.9)";
+  ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+
+  ctx.strokeStyle = COLORS.yellow;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+
+  ctx.fillStyle = COLORS.black;
+  ctx.font = "16px Arial";
+  ctx.textAlign = "left";
+
+  ctx.fillText("Mission: Clear debris to restore clean water.", boxX + 12, boxY + 25);
+  ctx.fillText("Move: A/D or Arrow Keys", boxX + 12, boxY + 50);
+  ctx.fillText("Jump: W, Space, or Up Arrow", boxX + 12, boxY + 72);
+  ctx.fillText("Clear debris: Press E or F", boxX + 12, boxY + 94);
 }
 
 function drawSkillCheck() {

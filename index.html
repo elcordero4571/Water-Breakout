@@ -4,20 +4,41 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Water Escape - Charity: Water Prototype</title>
+  <title>Water Escape - Charity: Water </title>
 
   <!-- Connects the separate CSS file -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
-  <h1>Water Escape Prototype</h1>
+  <h1>Water Escape: Avoid Germs, Clear Debris, Restore Clean Water</h1>
 
   <p>
     Move: A/D or Arrow Keys | Jump: W/Space/Up | Break: E or F | Restart: R
   </p>
+<div id="difficultyMenu" class="difficulty-menu">
+  <div class="difficulty-box">
+    <h1>Choose Difficulty</h1>
+    <p>Select how challenging you want the clean water mission to be.</p>
 
-  <canvas id="gameCanvas" width="960" height="540"></canvas>
+    <button class="difficulty-btn" data-difficulty="easy">
+      Easy
+      <span>5 lives, slower germs, easier skill checks</span>
+    </button>
+
+    <button class="difficulty-btn" data-difficulty="normal">
+      Normal
+      <span>3 lives, balanced gameplay</span>
+    </button>
+
+    <button class="difficulty-btn" data-difficulty="hard">
+      Hard
+      <span>2 lives, faster germs, tougher skill checks</span>
+    </button>
+  </div>
+</div>
+
+<canvas id="gameCanvas" width="960" height="540"></canvas>
 
   <!-- Connects the separate JavaScript file -->
   <script src="script.js"></script>
