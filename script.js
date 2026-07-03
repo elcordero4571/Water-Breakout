@@ -714,12 +714,12 @@ function replaceDebrisIfCleared() {
     return;
   }
 
-  // If the pipe is already unlocked, stop adding new debris
+  // Stop replacing debris after the pipe unlocks
   if (pipeUnlocked) {
     return;
   }
 
-  // Only replace debris after ALL current debris is cleared
+  // Only replace debris after ALL debris is cleared
   if (obstacles.length > 0) {
     return;
   }
@@ -728,9 +728,26 @@ function replaceDebrisIfCleared() {
 
   debrisWaveNumber++;
 
-  for (let i = 0; i < 3; i++) {
-    const platformIndex = randomBetween(1, platforms.length - 1);
-    const platform = platforms[platformIndex];
+  // Platform 0 is the ground, so this uses only platforms 1, 2, and 3
+  let availablePlatformIndexes = [];
+
+  for (let i = 1; i < platforms.length; i++) {
+    availablePlatformIndexes.push(i);
+  }
+
+  // Shuffle the platform indexes so the order is random
+  for (let i = availablePlatformIndexes.length - 1; i > 0; i--) {
+    const randomIndex = randomBetween(0, i);
+    const temp = availablePlatformIndexes[i];
+    availablePlatformIndexes[i] = availablePlatformIndexes[randomIndex];
+    availablePlatformIndexes[randomIndex] = temp;
+  }
+
+  // Spawn up to 3 debris blocks, each on a different platform
+  const debrisToSpawn = Math.min(3, availablePlatformIndexes.length);
+
+  for (let i = 0; i < debrisToSpawn; i++) {
+    const platform = platforms[availablePlatformIndexes[i]];
 
     obstacles.push({
       x: randomBetween(platform.x + 10, platform.x + platform.w - 70),
@@ -745,7 +762,7 @@ function replaceDebrisIfCleared() {
   }
 
   totalObstacles = obstacles.length;
-};
+}
 
 // ==================================================
 // 12. GERM / BACTERIA ENEMIES
