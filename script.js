@@ -46,6 +46,7 @@ let gameEndTime = null;
 
 let gameMode = "endless";
 let lastSurvivalScoreTime = 0;
+let debrisWaveNumber = 1;
 
 let pipeUnlocked = false;
 let endlessMaxObstacles = 3;
@@ -222,6 +223,7 @@ function loadLevel() {
   startTime = Date.now();
   gameEndTime = null;
   lastSurvivalScoreTime = Date.now();
+  debrisWaveNumber = 1;
   pipeUnlocked = false;
   skillCheckActive = false;
   skillCheckTargetObstacle = null;
@@ -496,7 +498,7 @@ function update() {
 
   addEndlessSurvivalScore();
   checkEndlessGoal();
-  spawnEndlessDebris();
+  replaceDebrisIfCleared();
   checkPipeGoal();
 }
 
@@ -707,27 +709,42 @@ function completeSkillCheck(success) {
   skillCheckTargetObstacle = null;
 }
 
-function spawnEndlessDebris() {
-  if (gameMode !== "endless" || gameWon || gameOver || pipeUnlocked) {
+function replaceDebrisIfCleared() {
+  if (gameMode !== "endless" || gameWon || gameOver) {
+    return;
+  }
+
+  // If the pipe is already unlocked, stop adding new debris
+  if (pipeUnlocked) {
+    return;
+  }
+
+  // Only replace debris after ALL current debris is cleared
+  if (obstacles.length > 0) {
     return;
   }
 
   const difficulty = getDifficultySettings();
 
-  while (obstacles.length < endlessMaxObstacles) {
+  debrisWaveNumber++;
+
+  for (let i = 0; i < 3; i++) {
     const platformIndex = randomBetween(1, platforms.length - 1);
     const platform = platforms[platformIndex];
 
-    const newObstacle = {
+    obstacles.push({
       x: randomBetween(platform.x + 10, platform.x + platform.w - 70),
       y: platform.y - 60,
       w: 60,
       h: 60,
-      hp: randomBetween(difficulty.obstacleHpMin, difficulty.obstacleHpMax)
-    };
-
-    obstacles.push(newObstacle);
+      hp: randomBetween(
+        difficulty.obstacleHpMin,
+        difficulty.obstacleHpMax
+      )
+    });
   }
+
+  totalObstacles = obstacles.length;
 };
 
 // ==================================================
