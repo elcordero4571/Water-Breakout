@@ -26,6 +26,8 @@ const COLORS = {
   cleanWater: "#77A8BB"
 };
 
+const BRAND_FONT = '"Libre Baskerville", Baskerville, Georgia, serif';
+
 // ==================================================
 // 3. GAME SETTINGS
 // ==================================================
@@ -987,7 +989,7 @@ function drawObstacles() {
     ctx.stroke();
 
     ctx.fillStyle = COLORS.white;
-    ctx.font = "16px Arial";
+    ctx.font = `16px ${BRAND_FONT}`;
     ctx.fillText("HP " + obstacle.hp, obstacle.x + 10, obstacle.y + 38);
   });
 }
@@ -1017,7 +1019,7 @@ function drawPipe() {
     ctx.stroke();
 
     ctx.fillStyle = COLORS.white;
-    ctx.font = "13px Arial";
+    ctx.font = `13px ${BRAND_FONT}`;
     ctx.fillText("LOCKED", pipe.x - 3, pipe.y - 10);
   } else {
     ctx.fillStyle = COLORS.cleanWater;
@@ -1033,7 +1035,7 @@ function drawPipe() {
     ctx.fillRect(pipe.x + pipe.w / 2 - 6, pipe.y + pipe.h, 12, 500 - (pipe.y + pipe.h));
 
     ctx.fillStyle = COLORS.white;
-    ctx.font = "13px Arial";
+    ctx.font = `13px ${BRAND_FONT}`;
     ctx.fillText("OPEN!", pipe.x + 5, pipe.y - 10);
   }
 
@@ -1070,7 +1072,7 @@ function drawCheckpoint() {
   ctx.fillRect(checkpoint.x + 5, checkpoint.y + 5, checkpoint.w - 10, checkpoint.h - 10);
 
   ctx.fillStyle = COLORS.white;
-  ctx.font = "11px Arial";
+  ctx.font = `11px ${BRAND_FONT}`;
   ctx.textAlign = "center";
   ctx.fillText("SAVE", checkpoint.x + checkpoint.w / 2, checkpoint.y - 6);
   ctx.textAlign = "left";
@@ -1102,7 +1104,7 @@ function drawGerms() {
     }
 
     ctx.fillStyle = COLORS.white;
-    ctx.font = "11px Arial";
+    ctx.font = `11px ${BRAND_FONT}`;
     ctx.fillText("GERM", germ.x + 3, germ.y + 24);
   });
 }
@@ -1191,11 +1193,11 @@ function drawUI() {
   drawJerryCan(26, 20, 20, 28);
 
   ctx.fillStyle = COLORS.black;
-  ctx.font = "22px Arial";
+  ctx.font = `22px ${BRAND_FONT}`;
   ctx.textAlign = "left";
   ctx.fillText("charity: water", 58, 41);
 
-  ctx.font = "18px Arial";
+  ctx.font = `18px ${BRAND_FONT}`;
   ctx.fillText(`Lives: ${lives}`, 250, 41);
   ctx.fillText(`Time: ${time}`, 360, 41);
 
@@ -1203,7 +1205,7 @@ function drawUI() {
   ctx.fillText(`Score: ${score}`, WIDTH - 20, 41);
   ctx.textAlign = "left";
 
-  ctx.font = "16px Arial";
+  ctx.font = `16px ${BRAND_FONT}`;
   ctx.fillStyle = COLORS.black;
   ctx.fillText(`Water Restored: ${waterProgress}%`, 58, 70);
 
@@ -1228,24 +1230,23 @@ function drawUI() {
   const difficulty = getDifficultySettings();
 
   ctx.fillStyle = COLORS.black;
-  ctx.font = "14px Arial";
+  ctx.font = `14px ${BRAND_FONT}`;
   ctx.textAlign = "left";
   ctx.fillText(`Difficulty: ${difficulty.name}`, 58, 92);
   ctx.fillText("Press R to reopen difficulty menu", 58, 112);
   
   if (gameMode === "endless") {
-  if (pipeUnlocked) {
-    ctx.fillText("Pipe Unlocked! Reach the pipe!", 58, 132);
-  } else {
-    ctx.fillText(
-      `Endless Goal: ${score}/${difficulty.endlessTargetScore} points`,
-      58,
-      132
-    );
+    if (pipeUnlocked) {
+      ctx.fillText("Pipe Unlocked! Reach the pipe!", 58, 132);
+    } else {
+      ctx.fillText(
+        `Endless Goal: ${score}/${difficulty.endlessTargetScore} points`,
+        58,
+        132
+      );
+    }
   }
 }
-
-};
 
 function drawTutorialText() {
   const timeSinceStart = Date.now() - startTime;
@@ -1267,7 +1268,7 @@ function drawTutorialText() {
   ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
 
   ctx.fillStyle = COLORS.black;
-  ctx.font = "16px Arial";
+  ctx.font = `16px ${BRAND_FONT}`;
   ctx.textAlign = "left";
 
   ctx.fillText("Mission: Clear debris to restore clean water.", boxX + 12, boxY + 25);
@@ -1296,11 +1297,11 @@ function drawSkillCheck() {
   ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
 
   ctx.fillStyle = COLORS.black;
-  ctx.font = "24px Arial";
+  ctx.font = `24px ${BRAND_FONT}`;
   ctx.textAlign = "center";
   ctx.fillText("SKILL CHECK!", WIDTH / 2, boxY + 40);
 
-  ctx.font = "18px Arial";
+  ctx.font = `18px ${BRAND_FONT}`;
   ctx.fillText("Press E or F at the right time!", WIDTH / 2, boxY + 70);
 
   // Draw timing bar
@@ -1327,7 +1328,7 @@ function drawSkillCheck() {
   ctx.fillRect(targetZoneX, barY, targetZoneWidth, barHeight);
 
   ctx.fillStyle = COLORS.black;
-  ctx.font = "16px Arial";
+  ctx.font = `16px ${BRAND_FONT}`;
   ctx.fillText("Time remaining: " + Math.ceil((skillCheckDuration - elapsed) / 1000) + "s", WIDTH / 2, boxY + 170);
 
   ctx.textAlign = "left";
@@ -1362,19 +1363,19 @@ function drawWinScreen() {
   ctx.fillStyle = COLORS.black;
   ctx.textAlign = "center";
 
-  ctx.font = "30px Arial";
+  ctx.font = `30px ${BRAND_FONT}`;
   const winTitle = gameMode === "endless"
-  ? "Target Score Reached! Pipe Is Unlocked!"
+  ? "Pipe Reached!"
   : "Clean Water Restored!";
 
   ctx.fillText(winTitle, boxX + boxWidth / 2 + 80, boxY + 65);
 
-  ctx.font = "20px Arial";
+  ctx.font = `20px ${BRAND_FONT}`;
   ctx.fillText(`Final Score: ${score}`, boxX + boxWidth / 2 + 80, boxY + 110);
   ctx.fillText(`Time: ${finalTime} seconds`, boxX + boxWidth / 2 + 80, boxY + 145);
   ctx.fillText(`Difficulty: ${difficulty.name}`, boxX + boxWidth / 2 + 80, boxY + 180);
 
-  ctx.font = "18px Arial";
+  ctx.font = `18px ${BRAND_FONT}`;
   ctx.fillText("Press R to play again", boxX + boxWidth / 2 + 80, boxY + 220);
 
   ctx.textAlign = "left";
@@ -1405,12 +1406,11 @@ function drawCenterMessage(title, subtitle) {
   ctx.fillStyle = COLORS.black;
   ctx.textAlign = "center";
 
-  ctx.font = "30px Arial";
+  ctx.font = `30px ${BRAND_FONT}`;
   ctx.fillText(title, textX, titleY);
 
-  ctx.font = "20px Arial";
+  ctx.font = `20px ${BRAND_FONT}`;
   ctx.fillText(subtitle, textX, subtitleY);
 
   ctx.textAlign = "left";
-};
-
+}
