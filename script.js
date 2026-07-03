@@ -47,6 +47,9 @@ let gameEndTime = null;
 let gameMode = "endless";
 let lastSurvivalScoreTime = 0;
 
+let pipeUnlocked = false;
+let endlessMaxObstacles = 3;
+
 let skillCheckActive = false;
 let skillCheckTargetObstacle = null;
 let skillCheckStartTime = 0;
@@ -219,6 +222,7 @@ function loadLevel() {
   startTime = Date.now();
   gameEndTime = null;
   lastSurvivalScoreTime = Date.now();
+  pipeUnlocked = false;
   skillCheckActive = false;
   skillCheckTargetObstacle = null;
   skillCheckTargetTime = 0;
@@ -491,8 +495,9 @@ function update() {
   }
 
   addEndlessSurvivalScore();
-  checkPipeGoal();
   checkEndlessGoal();
+  spawnEndlessDebris();
+  checkPipeGoal();
 }
 
 function animateBackgroundWater() {
@@ -702,6 +707,29 @@ function completeSkillCheck(success) {
   skillCheckTargetObstacle = null;
 }
 
+function spawnEndlessDebris() {
+  if (gameMode !== "endless" || gameWon || gameOver || pipeUnlocked) {
+    return;
+  }
+
+  const difficulty = getDifficultySettings();
+
+  while (obstacles.length < endlessMaxObstacles) {
+    const platformIndex = randomBetween(1, platforms.length - 1);
+    const platform = platforms[platformIndex];
+
+    const newObstacle = {
+      x: randomBetween(platform.x + 10, platform.x + platform.w - 70),
+      y: platform.y - 60,
+      w: 60,
+      h: 60,
+      hp: randomBetween(difficulty.obstacleHpMin, difficulty.obstacleHpMax)
+    };
+
+    obstacles.push(newObstacle);
+  }
+};
+
 // ==================================================
 // 12. GERM / BACTERIA ENEMIES
 // ==================================================
@@ -798,20 +826,25 @@ function checkEndlessGoal() {
   const difficulty = getDifficultySettings();
 
   if (score >= difficulty.endlessTargetScore) {
-    gameEndTime = Date.now();
-    gameWon = true;
+    pipeUnlocked = true;
   }
 }
 
 function checkPipeGoal() {
+  const difficulty = getDifficultySettings();
+
   if (gameMode === "endless") {
+    if (pipeUnlocked && isColliding(player, pipe)) {
+      score += Math.floor(200 * difficulty.scoreMultiplier);
+      gameEndTime = Date.now();
+      gameWon = true;
+    }
+
     return;
   }
 
   if (isColliding(player, pipe) && obstacles.length === 0) {
-    const difficulty = getDifficultySettings();
     score += Math.floor(200 * difficulty.scoreMultiplier);
-
     gameEndTime = Date.now();
     gameWon = true;
   }
@@ -926,18 +959,20 @@ function drawObstacles() {
 }
 
 function drawPipe() {
+  const isPipeLocked = gameMode === "endless"
+    ? !pipeUnlocked
+    : obstacles.length > 0;
+
   ctx.fillStyle = COLORS.navy;
   ctx.fillRect(pipe.x, pipe.y, pipe.w, pipe.h);
 
   ctx.fillStyle = COLORS.deepTeal;
   ctx.fillRect(pipe.x + 8, pipe.y + 8, pipe.w - 16, pipe.h - 16);
 
-  if (obstacles.length > 0) {
-    // Pipe is still blocked
+  if (isPipeLocked) {
     ctx.fillStyle = COLORS.burntOrange;
     ctx.fillRect(pipe.x + 16, pipe.y + 16, pipe.w - 32, pipe.h - 32);
 
-    // Small debris marks
     ctx.strokeStyle = COLORS.navy;
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -949,26 +984,23 @@ function drawPipe() {
 
     ctx.fillStyle = COLORS.white;
     ctx.font = "13px Arial";
-    ctx.fillText("BLOCKED", pipe.x - 7, pipe.y - 10);
+    ctx.fillText("LOCKED", pipe.x - 3, pipe.y - 10);
   } else {
-    // Pipe has been restored
     ctx.fillStyle = COLORS.cleanWater;
     ctx.fillRect(pipe.x + 16, pipe.y + 16, pipe.w - 32, pipe.h - 32);
 
-    // Clean water glow
     ctx.strokeStyle = COLORS.yellow;
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.arc(pipe.x + pipe.w / 2, pipe.y + pipe.h / 2, 34, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Water stream coming from pipe
     ctx.fillStyle = COLORS.cleanWater;
     ctx.fillRect(pipe.x + pipe.w / 2 - 6, pipe.y + pipe.h, 12, 500 - (pipe.y + pipe.h));
 
     ctx.fillStyle = COLORS.white;
     ctx.font = "13px Arial";
-    ctx.fillText("CLEAN!", pipe.x + 3, pipe.y - 10);
+    ctx.fillText("OPEN!", pipe.x + 5, pipe.y - 10);
   }
 
   ctx.strokeStyle = COLORS.yellow;
@@ -1168,15 +1200,18 @@ function drawUI() {
   ctx.fillText("Press R to reopen difficulty menu", 58, 112);
   
   if (gameMode === "endless") {
-  ctx.fillText(
-    `Endless Goal: ${score}/${difficulty.endlessTargetScore} points`,
-    58,
-    132
-  );
+  if (pipeUnlocked) {
+    ctx.fillText("Pipe Unlocked! Reach the pipe!", 58, 132);
+  } else {
+    ctx.fillText(
+      `Endless Goal: ${score}/${difficulty.endlessTargetScore} points`,
+      58,
+      132
+    );
+  }
 }
 
-// THIS CLOSES drawUI()
-}
+};
 
 function drawTutorialText() {
   const timeSinceStart = Date.now() - startTime;
@@ -1295,7 +1330,7 @@ function drawWinScreen() {
 
   ctx.font = "30px Arial";
   const winTitle = gameMode === "endless"
-  ? "Target Score Reached!"
+  ? "Target Score Reached! Pipe Is Unlocked!"
   : "Clean Water Restored!";
 
   ctx.fillText(winTitle, boxX + boxWidth / 2 + 80, boxY + 65);
