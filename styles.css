@@ -107,3 +107,49 @@ canvas {
 .difficulty-btn:hover {
   background: #77A8BB;
 }
+
+body {
+  font-family: "Libre Baskerville", Baskerville, Georgia, serif;
+  background: #F5F2E0;
+  color: #000000;
+}
+
+.game-footer {
+  width: 960px;
+  max-width: 95%;
+  margin: 18px auto 0;
+  padding: 18px 22px;
+  background: #1C2B40;
+  border-top: 6px solid #FFC908;
+  color: #FFFFFF;
+  text-align: center;
+  font-family: "Libre Baskerville", Baskerville, Georgia, serif;
+}
+
+.game-footer p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.footer-links a {
+  color: #000000;
+  background: #FFC908;
+  border: 2px solid #FFFFFF;
+  padding: 9px 14px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.footer-links a:hover {
+  background: #77A8BB;
+  color: #FFFFFF;
+}

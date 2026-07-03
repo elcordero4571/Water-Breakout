@@ -8,6 +8,9 @@
 
   <!-- Connects the separate CSS file -->
   <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -39,6 +42,27 @@
 </div>
 
 <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+<!-- Add this footer directly below your <canvas id="gameCanvas"> element -->
+<footer class="game-footer">
+  <p>
+    Inspired by charity: water’s mission to bring clean and safe water to communities.
+  </p>
+
+  <div class="footer-links">
+    <a href="https://www.charitywater.org/" target="_blank" rel="noopener noreferrer">
+      Visit charity: water
+    </a>
+
+    <a href="https://www.charitywater.org/donate" target="_blank" rel="noopener noreferrer">
+      Donate
+    </a>
+
+    <a href="https://www.charitywater.org/donate/the-spring" target="_blank" rel="noopener noreferrer">
+      Give Monthly
+    </a>
+  </div>
+</footer>
 
   <!-- Connects the separate JavaScript file -->
   <script src="script.js"></script>
