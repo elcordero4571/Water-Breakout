@@ -44,6 +44,9 @@ let invincibleTimer = 0;
 let startTime = Date.now();
 let gameEndTime = null;
 
+let gameMode = "endless";
+let lastSurvivalScoreTime = 0;
+
 let skillCheckActive = false;
 let skillCheckTargetObstacle = null;
 let skillCheckStartTime = 0;
@@ -79,7 +82,8 @@ const DIFFICULTIES = {
     skillDurationMax: 3000,
     skillToleranceMin: 300,
     skillToleranceMax: 450,
-    scoreMultiplier: 1
+    scoreMultiplier: 1,
+    endlessTargetScore: 500
   },
 
   normal: {
@@ -92,7 +96,8 @@ const DIFFICULTIES = {
     skillDurationMax: 2500,
     skillToleranceMin: 150,
     skillToleranceMax: 350,
-    scoreMultiplier: 1
+    scoreMultiplier: 1,
+    endlessTargetScore: 750
   },
 
   hard: {
@@ -105,7 +110,8 @@ const DIFFICULTIES = {
     skillDurationMax: 2000,
     skillToleranceMin: 90,
     skillToleranceMax: 220,
-    scoreMultiplier: 1.25
+    scoreMultiplier: 1.25,
+    endlessTargetScore: 1000
   }
 };
 
@@ -212,6 +218,7 @@ function loadLevel() {
   invincibleTimer = 0;
   startTime = Date.now();
   gameEndTime = null;
+  lastSurvivalScoreTime = Date.now();
   skillCheckActive = false;
   skillCheckTargetObstacle = null;
   skillCheckTargetTime = 0;
@@ -474,9 +481,18 @@ function update() {
   movePlayer();
   moveGerms();
   checkGermDamage();
-  checkCollectibles();
-  checkCheckpoint();
+
+  if (typeof checkCollectibles === "function") {
+    checkCollectibles();
+  }
+
+  if (typeof checkCheckpoint === "function") {
+    checkCheckpoint();
+  }
+
+  addEndlessSurvivalScore();
   checkPipeGoal();
+  checkEndlessGoal();
 }
 
 function animateBackgroundWater() {
@@ -708,6 +724,21 @@ function checkGermDamage() {
   });
 }
 
+function addEndlessSurvivalScore() {
+  if (gameMode !== "endless" || gameWon || gameOver) {
+    return;
+  }
+
+  const now = Date.now();
+
+  if (now - lastSurvivalScoreTime >= 1000) {
+    const difficulty = getDifficultySettings();
+
+    score += Math.floor(5 * difficulty.scoreMultiplier);
+    lastSurvivalScoreTime = now;
+  }
+}
+
 function checkCollectibles() {
   collectibles.forEach(function(drop) {
     if (!drop.collected && isColliding(player, drop)) {
@@ -759,7 +790,24 @@ function damagePlayer() {
 // 13. PIPE GOAL
 // ==================================================
 
+function checkEndlessGoal() {
+  if (gameMode !== "endless" || gameWon || gameOver) {
+    return;
+  }
+
+  const difficulty = getDifficultySettings();
+
+  if (score >= difficulty.endlessTargetScore) {
+    gameEndTime = Date.now();
+    gameWon = true;
+  }
+}
+
 function checkPipeGoal() {
+  if (gameMode === "endless") {
+    return;
+  }
+
   if (isColliding(player, pipe) && obstacles.length === 0) {
     const difficulty = getDifficultySettings();
     score += Math.floor(200 * difficulty.scoreMultiplier);
@@ -1118,6 +1166,16 @@ function drawUI() {
   ctx.textAlign = "left";
   ctx.fillText(`Difficulty: ${difficulty.name}`, 58, 92);
   ctx.fillText("Press R to reopen difficulty menu", 58, 112);
+  
+  if (gameMode === "endless") {
+  ctx.fillText(
+    `Endless Goal: ${score}/${difficulty.endlessTargetScore} points`,
+    58,
+    132
+  );
+}
+
+// THIS CLOSES drawUI()
 }
 
 function drawTutorialText() {
@@ -1236,7 +1294,11 @@ function drawWinScreen() {
   ctx.textAlign = "center";
 
   ctx.font = "30px Arial";
-  ctx.fillText("Clean Water Restored!", boxX + boxWidth / 2 + 80, boxY + 65);
+  const winTitle = gameMode === "endless"
+  ? "Target Score Reached!"
+  : "Clean Water Restored!";
+
+  ctx.fillText(winTitle, boxX + boxWidth / 2 + 80, boxY + 65);
 
   ctx.font = "20px Arial";
   ctx.fillText(`Final Score: ${score}`, boxX + boxWidth / 2 + 80, boxY + 110);
@@ -1281,4 +1343,5 @@ function drawCenterMessage(title, subtitle) {
   ctx.fillText(subtitle, textX, subtitleY);
 
   ctx.textAlign = "left";
-}
+};
+
